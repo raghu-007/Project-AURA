@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA — Live Ecosystem Intelligence</title>
+    <meta name="description" content="Real-time visualization of the AURA AI multi-agent ecosystem simulation">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+    <!-- ── Header ─────────────────────────────────────── -->
+    <header class="header" id="appHeader">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 40 40" width="32" height="32" class="logo-svg">
+                        <!-- Outer orbital ring -->
+                        <ellipse cx="20" cy="20" rx="16" ry="16" fill="none" stroke="url(#logoGrad)" stroke-width="1.2"
+                            opacity="0.4" stroke-dasharray="3 4" />
+                        <!-- Inner orbital ring -->
+                        <ellipse cx="20" cy="20" rx="10" ry="10" fill="none" stroke="url(#logoGrad)" stroke-width="0.8"
+                            opacity="0.25" />
+                        <!-- Core -->
+                        <circle cx="20" cy="20" r="4" fill="url(#logoGrad)" class="logo-core-circle" />
+                        <!-- Orbiting nodes -->
+                        <circle cx="20" cy="4" r="2.5" fill="#39d98a" class="node node-1" />
+                        <circle cx="34" cy="28" r="2" fill="#5b8def" class="node node-2" />
+                        <circle cx="6" cy="28" r="2.2" fill="#ff6b6b" class="node node-3" />
+                        <!-- Connecting lines -->
+                        <line x1="20" y1="4" x2="20" y2="16" stroke="#39d98a" stroke-width="0.6" opacity="0.3" />
+                        <line x1="34" y1="28" x2="24" y2="20" stroke="#5b8def" stroke-width="0.6" opacity="0.3" />
+                        <line x1="6" y1="28" x2="16" y2="20" stroke="#ff6b6b" stroke-width="0.6" opacity="0.3" />
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00e5ff" />
+                                <stop offset="100%" stop-color="#5b8def" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>AURA</h1>
+                    <span class="tagline">Ecosystem Intelligence</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-center">
+            <div class="env-pills">
+                <div class="pill pill-season" id="seasonBadge">
+                    <span class="pill-icon" id="seasonIcon">🌸</span>
+                    <span id="seasonText">Spring</span>
+                </div>
+                <div class="pill pill-time" id="timeBadge">
+                    <span class="pill-icon" id="timeIcon">☀️</span>
+                    <span id="timeText">Day</span>
+                </div>
+                <div class="pill pill-event" id="eventBadge" style="display:none">
+                    <span class="pill-icon">⚡</span>
+                    <span id="eventText"></span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-badge" id="connectionStatus">
+                <div class="status-dot"></div>
+                <span class="status-text">Connecting</span>
+            </div>
+            <div class="tick-counter">
+                <span class="tick-label">TICK</span>
+                <span class="tick-value" id="tickDisplay">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Layout ────────────────────────────────── -->
+    <main class="dashboard">
+
+        <!-- Left: World Canvas -->
+        <section class="world-panel">
+            <div class="canvas-wrap">
+                <canvas id="worldCanvas"></canvas>
+                <div class="canvas-overlay" id="canvasOverlay">
+                    <div class="overlay-card" id="entityInspector" style="display:none">
+                        <div class="inspector-header">
+                            <span class="inspector-icon" id="inspectorIcon">🐇</span>
+                            <span class="inspector-title" id="inspectorTitle">Herbivore #42</span>
+                            <button class="inspector-close" id="inspectorClose">✕</button>
+                        </div>
+                        <div class="inspector-body" id="inspectorBody"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="controls-bar">
+                <div class="control-group">
+                    <label class="control-label">
+                        <span>Zoom</span>
+                        <input type="range" id="zoomSlider" min="4" max="16" value="8" step="1">
+                    </label>
+                    <label class="control-label">
+                        <span>Speed</span>
+                        <input type="range" id="speedSlider" min="1" max="20" value="10" step="1">
+                    </label>
+                </div>
+                <div class="legend-bar">
+                    <span class="legend-chip"><span class="chip-dot" style="background:#4ade80"></span>Grass</span>
+                    <span class="legend-chip"><span class="chip-dot" style="background:#22c55e"></span>Bush</span>
+                    <span class="legend-chip"><span class="chip-dot" style="background:#15803d"></span>Tree</span>
+                    <span class="legend-divider"></span>
+                    <span class="legend-chip"><span class="chip-dot chip-fauna"
+                            style="background:#60a5fa"></span>Herbivore</span>
+                    <span class="legend-chip"><span class="chip-dot chip-fauna"
+                            style="background:#f87171"></span>Predator</span>
+                    <span class="legend-chip"><span class="chip-dot chip-fauna"
+                            style="background:#fbbf24"></span>Omnivore</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Intelligence Panel -->
+        <section class="intel-panel" id="intelPanel">
+
+            <!-- Species Cards -->
+            <div class="species-row">
+                <div class="species-card s-flora">
+                    <div class="s-accent"></div>
+                    <div class="s-body">
+                        <div class="s-meta">
+                            <span class="s-emoji">🌿</span>
+                            <span class="s-label">FLORA</span>
+                        </div>
+                        <div class="s-count" id="floraCount" data-value="0">0</div>
+                    </div>
+                </div>
+                <div class="species-card s-herb">
+                    <div class="s-accent"></div>
+                    <div class="s-body">
+                        <div class="s-meta">
+                            <span class="s-emoji">🐇</span>
+                            <span class="s-label">HERBIVORE</span>
+                        </div>
+                        <div class="s-count" id="herbCount" data-value="0">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="species-row">
+                <div class="species-card s-pred">
+                    <div class="s-accent"></div>
+                    <div class="s-body">
+                        <div class="s-meta">
+                            <span class="s-emoji">🐺</span>
+                            <span class="s-label">PREDATOR</span>
+                        </div>
+                        <div class="s-count" id="predCount" data-value="0">0</div>
+                    </div>
+                </div>
+                <div class="species-card s-omni">
+                    <div class="s-accent"></div>
+                    <div class="s-body">
+                        <div class="s-meta">
+                            <span class="s-emoji">🦊</span>
+                            <span class="s-label">OMNIVORE</span>
+                        </div>
+                        <div class="s-count" id="omniCount" data-value="0">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vitals Strip -->
+            <div class="vitals-strip">
+                <div class="vital">
+                    <div class="vital-ring vital-bio" id="bioRing">
+                        <svg viewBox="0 0 36 36">
+                            <circle class="ring-bg" cx="18" cy="18" r="15.9" />
+                            <circle class="ring-fg" id="bioArc" cx="18" cy="18" r="15.9" />
+                        </svg>
+                        <span class="vital-val" id="biodiversity">0</span>
+                    </div>
+                    <span class="vital-label">Diversity</span>
+                </div>
+                <div class="vital">
+                    <div class="vital-ring vital-energy" id="energyRing">
+                        <svg viewBox="0 0 36 36">
+                            <circle class="ring-bg" cx="18" cy="18" r="15.9" />
+                            <circle class="ring-fg" id="energyArc" cx="18" cy="18" r="15.9" />
+                        </svg>
+                        <span class="vital-val" id="avgEnergy">0</span>
+                    </div>
+                    <span class="vital-label">Avg Energy</span>
+                </div>
+                <div class="vital vital-text-only">
+                    <span class="vital-big" id="totalBirths">0</span>
+                    <span class="vital-label">Births</span>
+                </div>
+                <div class="vital vital-text-only">
+                    <span class="vital-big" id="totalDeaths">0</span>
+                    <span class="vital-label">Deaths</span>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title">Population Dynamics</span>
+                    <span class="chart-subtitle" id="popTrend"></span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="populationChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title">Energy Distribution</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="energyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Genetic Drift -->
+            <div class="genetics-card">
+                <div class="chart-header">
+                    <span class="chart-title">Genetic Drift</span>
+                </div>
+                <div class="gene-row">
+                    <span class="gene-label">Speed</span>
+                    <div class="gene-track">
+                        <div class="gene-fill gene-speed" id="traitSpeed"></div>
+                    </div>
+                    <span class="gene-val" id="traitSpeedVal">0</span>
+                </div>
+                <div class="gene-row">
+                    <span class="gene-label">Vision</span>
+                    <div class="gene-track">
+                        <div class="gene-fill gene-vision" id="traitVision"></div>
+                    </div>
+                    <span class="gene-val" id="traitVisionVal">0</span>
+                </div>
+                <div class="gene-row">
+                    <span class="gene-label">Size</span>
+                    <div class="gene-track">
+                        <div class="gene-fill gene-size" id="traitSize"></div>
+                    </div>
+                    <span class="gene-val" id="traitSizeVal">0</span>
+                </div>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="activity-card">
+                <div class="chart-header">
+                    <span class="chart-title">Live Activity</span>
+                    <span class="activity-count" id="activityCount">0 events</span>
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-empty">Waiting for events...</div>
+                </div>
+            </div>
+
+
+        </section>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
